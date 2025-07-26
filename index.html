@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mindful Steps – Guided Planner</title>
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+
+<nav style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: black;">
+  <div>
+    <a href="index.html" class="logo" style="color:white; text-decoration:none; font-weight:bold; font-size: 1.2rem;">Mindful Steps</a>
+  </div>
+  <div class="links" id="auth-links">
+    <button class="verify-button" onclick="window.location.href='auth.html'">Verify</button>
+  </div>
+</nav>
+
+<div class="scroll-container">
+  <section class="video-section">
+    <video autoplay muted loop playsinline>
+      <source src="videos/vid1.mov" type="video/mp4" />
+    </video>
+    <div class="caption">Ever found yourself wandering with no sense of direction?</div>
+  </section>
+  <section class="video-section">
+    <video autoplay muted loop playsinline>
+      <source src="videos/vid2.mov" type="video/mp4" />
+    </video>
+    <div class="caption">What if your path was picked just for you — based on time, mood, and energy?</div>
+  </section>
+  <section class="video-section">
+    <video autoplay muted loop playsinline>
+      <source src="videos/vid3.mov" type="video/mp4" />
+    </video>
+    <div class="caption">Scenic loops. Verified landmarks. Mindful elevation. All in one place.</div>
+  </section>
+
+  <section class="planner-section" id="planner">
+    <h2>Start your mindful walk here</h2>
+    <div class="input-group">
+      <button id="lets-go-btn">Let's Go for a Walk</button>
+    </div>
+  </section>
+
+  <section id="map-section">
+    <div class="map-overlay">Mindful Steps Campus Walk Map</div>
+    <div id="map-cover"
+      style="position:absolute; top:0; left:0; right:0; bottom:0; z-index:10; background:transparent; cursor:pointer;"
+      onclick="activateMap()">
+    </div>
+    <iframe
+      id="map-embed"
+      src="https://www.google.com/maps/d/embed?mid=1M5E2sW1T42gTQnrC-3Jl6ctaMGY9rRE"
+      width="100%"
+      height="100%"
+      style="border: 0; pointer-events: none;"
+      allowfullscreen
+      loading="lazy">
+    </iframe>
+  </section>
+</div>
+
+<button id="explore-btn" onclick="scrollToMap()">Explore on Map</button>
+
+<footer>
+  <div>
+    <h2>Mindful Steps</h2>
+    <p>Built to guide you through mindful walking routes across campus, step by step.</p>
+  </div>
+  <div>
+    <h3>Explore</h3>
+    <a href="#">Walkability Index</a>
+    <a href="#">Our Team</a>
+    <a href="#">Get Support</a>
+  </div>
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+  import { firebaseConfig } from "./firebase.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const links = document.getElementById("auth-links");
+  const letsGoBtn = document.getElementById("lets-go-btn");
+
+  let currentUser = null;
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) {
+      links.innerHTML = `
+        <span style="color:white; font-size: 0.95rem; margin-right: 1rem;">${user.email}</span>
+        <button class="verify-button" onclick="logout()">Logout</button>
+      `;
+    } else {
+      links.innerHTML = `
+        <button class="verify-button" onclick="window.location.href='auth.html'">Verify</button>
+      `;
+    }
+  });
+
+  letsGoBtn.addEventListener("click", () => {
+    if (currentUser) {
+      window.location.href = "generate-route.html";
+    } else {
+      alert("Please sign in to continue.");
+    }
+  });
+
+  window.logout = () => {
+    signOut(auth).then(() => window.location.href = "index.html");
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.caption').forEach((caption, i) =>
+      setTimeout(() => caption.classList.add('visible'), 500 + i * 700)
+    );
+    setTimeout(() => document.querySelector('.planner-section').classList.add('visible'), 2000);
+  });
+
+  window.scrollToMap = function () {
+    document.getElementById('map-section').scrollIntoView({ behavior: 'smooth' });
+  };
+
+  window.activateMap = function () {
+    document.getElementById('map-embed').style.pointerEvents = 'auto';
+    document.getElementById('map-cover').style.display = 'none';
+  };
+</script>
+
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mindful Steps – Smart Walk Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f9fafb; }
+    nav {
+      background: black; color: white; padding: 1rem 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    nav .logo { font-weight: bold; font-size: 1.2rem; color: white; text-decoration: none; }
+    .verify-button {
+      background: #10b981; color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; cursor: pointer;
+    }
+    .verify-button:hover { background: #059669; }
+    #floating-controls {
+      position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
+      background: white; padding: 1rem; border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      z-index: 999; display: flex; flex-direction: column;
+      gap: 0.75rem; width: 90%; max-width: 420px;
+    }
+    label { font-weight: bold; }
+    .mode-options { display: flex; gap: 1rem; margin-bottom: 0.5rem; }
+    input, button {
+      padding: 0.6rem 1rem; font-size: 1rem; border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #2563eb; color: white;
+      border: none; cursor: pointer;
+    }
+    button:hover { background-color: #1e40af; }
+    #map { height: 60vh; width: 100vw; }
+    #progress-section {
+      padding: 1rem 2rem; background: #fff; font-size: 1rem; line-height: 1.6; color: #1f2937;
+    }
+    #progress-bar-container {
+      background: #e5e7eb; border-radius: 10px; height: 20px; width: 100%;
+    }
+    #progress-bar {
+      background: #2563eb; height: 100%; border-radius: 10px; width: 0%; transition: width 0.5s;
+    }
+    #recenter-btn {
+      position: absolute; bottom: 120px; right: 20px; z-index: 1000;
+      background: white; color: #1d4ed8; border: 2px solid #1d4ed8;
+      font-weight: bold; padding: 0.5rem 1rem; border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    #recenter-btn:hover {
+      background: #1d4ed8; color: white;
+    }
+    footer {
+      background: #000; color: white; text-align: center;
+      padding: 1.5rem; font-size: 0.9rem;
+    }
+    .live-dot .pulse {
+      width: 12px; height: 12px; background: #3b82f6;
+      border-radius: 50%; box-shadow: 0 0 0 rgba(59,130,246, 0.4);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59,130,246, 0.4); }
+      70% { transform: scale(1.5); box-shadow: 0 0 0 12px rgba(59,130,246, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59,130,246, 0); }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Mindful Steps</a>
+  <button class="verify-button" onclick="window.location.href='auth.html'">Verify</button>
+</nav>
+
+<div id="floating-controls">
+  <label>Start:</label>
+  <div class="mode-options">
+    <label><input type="radio" name="start-mode" value="location" checked /> Use My Location</label>
+    <label><input type="radio" name="start-mode" value="click" /> Click on Map</label>
+    <label><input type="radio" name="start-mode" value="manual" /> Enter Manually</label>
+  </div>
+  <input type="text" id="source-input" placeholder="Type start..." list="source-suggestions" style="display: none;" />
+  <datalist id="source-suggestions"></datalist>
+
+  <label>Destination:</label>
+  <input type="text" id="dest-input" placeholder="Type destination..." list="dest-suggestions" />
+  <datalist id="dest-suggestions"></datalist>
+
+  <button onclick="generateRoute()">Generate Route</button>
+</div>
+
+<div id="map"></div>
+<div id="progress-section">
+  <div><strong>Live Route Progress:</strong></div>
+  <div id="progress-bar-container"><div id="progress-bar"></div></div>
+  <div id="pace-info"></div>
+  <div id="calories-info"></div>
+</div>
+<button id="recenter-btn" onclick="recenterToUser()">Recenter</button>
+
+<footer>
+  <h2>Mindful Steps</h2>
+  <p>Scenic walk routing for Lehigh and beyond.</p>
+</footer>
+
+<script>
+const map = L.map('map').setView([40.6075, -75.3770], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+let routeLayer = null, startMarker = null, endMarker = null, liveMarker = null;
+let latestLatLng = null, manualStartCoords = null;
+let polylineCoords = [];
+let walkedDistance = 0;
+let prevLatLng = null;
+const height = 1.65, weight = 70;
+
+function showLiveLocation() {
+  map.locate({ setView: false, watch: true, enableHighAccuracy: true });
+  map.on("locationfound", (e) => {
+    latestLatLng = e.latlng;
+    if (prevLatLng) walkedDistance += e.latlng.distanceTo(prevLatLng);
+    prevLatLng = e.latlng;
+
+    if (liveMarker) map.removeLayer(liveMarker);
+    liveMarker = L.marker(e.latlng, {
+      icon: L.divIcon({ className: "live-dot", html: `<div class='pulse'></div>` })
+    }).addTo(map);
+
+    updateProgress();
+  });
+  map.on("locationerror", () => alert("Location access denied."));
+}
+showLiveLocation();
+
+function recenterToUser() {
+  if (latestLatLng) map.flyTo(latestLatLng, 17);
+  else alert("Live location not available yet.");
+}
+
+map.on("click", (e) => {
+  const mode = document.querySelector('input[name="start-mode"]:checked').value;
+  if (mode !== "click") return;
+  manualStartCoords = [e.latlng.lng, e.latlng.lat];
+  if (startMarker) map.removeLayer(startMarker);
+  startMarker = L.marker(e.latlng).addTo(map).bindPopup("Start").openPopup();
+});
+
+document.querySelectorAll('input[name="start-mode"]').forEach(radio => {
+  radio.addEventListener("change", () => {
+    const mode = document.querySelector('input[name="start-mode"]:checked').value;
+    document.getElementById("source-input").style.display = mode === "manual" ? "block" : "none";
+    if (mode !== "click") manualStartCoords = null;
+    if (startMarker && mode !== "click") {
+      map.removeLayer(startMarker);
+      startMarker = null;
+    }
+  });
+});
+
+async function geocode(query) {
+  const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1`);
+  const data = await res.json();
+  if (!data.features.length) throw new Error("Location not found: " + query);
+  return data.features[0].geometry.coordinates;
+}
+
+async function generateRoute() {
+  const destText = document.getElementById("dest-input").value.trim();
+  if (!destText) return alert("Please enter a destination.");
+  const mode = document.querySelector('input[name="start-mode"]:checked').value;
+  const sourceText = document.getElementById("source-input").value.trim();
+
+  try {
+    const endCoords = await geocode(destText);
+    let startCoords;
+
+    if (mode === "manual") {
+      if (!sourceText) return alert("Enter a start location.");
+      startCoords = await geocode(sourceText);
+    } else if (mode === "click") {
+      if (!manualStartCoords) return alert("Click on the map to set start point.");
+      startCoords = manualStartCoords;
+    } else {
+      if (!latestLatLng) return alert("Waiting for your location...");
+      startCoords = [latestLatLng.lng, latestLatLng.lat];
+    }
+
+    const coordinates = [startCoords, endCoords];
+    const res = await fetch("https://api.openrouteservice.org/v2/directions/foot-walking/geojson", {
+      method: "POST",
+      headers: {
+        Authorization: "5b3ce3597851110001cf624864a06efbecaa4a48a93c8f73f9fa0b07",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ coordinates })
+    });
+    const data = await res.json();
+    if (!data.features?.length) throw new Error("No route found.");
+
+    if (routeLayer) map.removeLayer(routeLayer);
+    if (startMarker) map.removeLayer(startMarker);
+    if (endMarker) map.removeLayer(endMarker);
+
+    polylineCoords = data.features[0].geometry.coordinates.map(([lng, lat]) => L.latLng(lat, lng));
+
+    startMarker = L.marker([startCoords[1], startCoords[0]]).addTo(map).bindPopup("Start").openPopup();
+    endMarker = L.marker([endCoords[1], endCoords[0]]).addTo(map).bindPopup("Destination");
+    routeLayer = L.geoJSON(data).addTo(map);
+    map.fitBounds(routeLayer.getBounds());
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
+function updateProgress() {
+  if (!polylineCoords.length || !latestLatLng) return;
+  let totalDist = 0, nearestIdx = 0, minDist = Infinity;
+
+  polylineCoords.forEach((pt, i) => {
+    const d = pt.distanceTo(latestLatLng);
+    if (d < minDist) {
+      minDist = d;
+      nearestIdx = i;
+    }
+  });
+
+  for (let i = 1; i <= nearestIdx; i++) {
+    totalDist += polylineCoords[i].distanceTo(polylineCoords[i - 1]);
+  }
+
+  const progressPct = (totalDist / walkedDistance) * 100;
+  document.getElementById("progress-bar").style.width = `${Math.min(progressPct, 100).toFixed(0)}%`;
+
+  const durationMin = walkedDistance / 83.33; // ~5 km/h
+  const pace = durationMin / (walkedDistance / 1000);
+  const calories = 0.035 * weight * durationMin + (pace * pace / height) * 0.029 * weight * durationMin;
+
+  document.getElementById("pace-info").textContent = `Average Pace: ${pace.toFixed(1)} min/km`;
+  document.getElementById("calories-info").textContent = `Calories Burned: ${Math.round(calories)} kcal`;
+}
+
+document.getElementById("source-input").addEventListener("input", (e) => {
+  const val = e.target.value.trim();
+  if (val.length >= 2) fetchSuggestions(val, "source-suggestions");
+});
+
+document.getElementById("dest-input").addEventListener("input", (e) => {
+  const val = e.target.value.trim();
+  if (val.length >= 2) fetchSuggestions(val, "dest-suggestions");
+});
+
+async function fetchSuggestions(query, listId) {
+  const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`);
+  const data = await res.json();
+  const datalist = document.getElementById(listId);
+  datalist.innerHTML = "";
+  data.features.forEach(f => {
+    const label = [f.properties.name, f.properties.street, f.properties.city].filter(Boolean).join(", ");
+    const opt = document.createElement("option");
+    opt.value = label;
+    datalist.appendChild(opt);
+  });
+}
+</script>
+</body>
+</html>

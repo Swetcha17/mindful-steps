@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mindful Steps – Sign In / Sign Up</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #e0f2fe, #f0fdf4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .auth-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 360px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #0f172a;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+    }
+
+    button {
+      background: #10b981;
+      color: white;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #059669;
+    }
+
+    .toggle {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #2563eb;
+      cursor: pointer;
+    }
+
+    .error {
+      color: #dc2626;
+      text-align: center;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <h2 id="formTitle">Sign In</h2>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <div class="error" id="error-msg"></div>
+    <button id="auth-btn">Sign In</button>
+    <button id="reset-btn">Forgot Password</button>
+    <div class="toggle" id="toggle-form">Don't have an account? Sign Up</div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    import { firebaseConfig } from "./firebase.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    let isSignUp = false;
+
+    const formTitle = document.getElementById("formTitle");
+    const authBtn = document.getElementById("auth-btn");
+    const toggle = document.getElementById("toggle-form");
+    const errorDiv = document.getElementById("error-msg");
+    const resetBtn = document.getElementById("reset-btn");
+
+    function validatePassword(password) {
+      const lengthOK = password.length >= 8;
+      const hasUpper = /[A-Z]/.test(password);
+      const hasNumber = /\d/.test(password);
+      return lengthOK && hasUpper && hasNumber;
+    }
+
+
+    function updateFormState() {
+      formTitle.textContent = isSignUp ? "Sign Up" : "Sign In";
+      authBtn.textContent = isSignUp ? "Sign Up" : "Sign In";
+      toggle.textContent = isSignUp
+        ? "Already have an account? Sign In"
+        : "Don't have an account? Sign Up";
+      errorDiv.textContent = "";
+    }
+
+    toggle.addEventListener("click", () => {
+      isSignUp = !isSignUp;
+      updateFormState();
+    });
+
+    authBtn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      errorDiv.textContent = "";
+
+      if (!email || !password) {
+        errorDiv.textContent = "Please fill in both fields.";
+        return;
+      }
+
+      try {
+        if (isSignUp) {
+          const isValid = validatePassword(password);
+          if (!isValid) {
+            errorDiv.textContent = "Password must be at least 8 characters, include one uppercase letter and one number.";
+            return;
+          }
+          await createUserWithEmailAndPassword(auth, email, password);
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+        window.location.href = "index.html";  // 👈 Redirect here after success
+      } catch (err) {
+        errorDiv.textContent = err.message;
+      }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email) return alert("Enter your email to reset password.");
+      sendPasswordResetEmail(auth, email)
+        .then(() => alert("Reset link sent. Check your email."))
+        .catch(err => alert(err.message));
+    });
+
+    updateFormState(); // initialize form
+  </script>
+</body>
+</html>
