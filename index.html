@@ -5,6 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mindful Steps – Guided Planner</title>
   <link rel="stylesheet" href="styles/main.css" />
+  <style>
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: #111;
+      min-width: 180px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      z-index: 1001;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .dropdown-content a {
+      color: white;
+      padding: 0.75rem 1rem;
+      display: block;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .dropdown-content a:hover {
+      background-color: #1e293b;
+    }
+
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+  </style>
 </head>
 <body>
 
@@ -13,26 +48,29 @@
     <a href="index.html" class="logo" style="color:white; text-decoration:none; font-weight:bold; font-size: 1.2rem;">Mindful Steps</a>
   </div>
   <div class="links" id="auth-links">
-    <button class="verify-button" onclick="window.location.href='auth.html'">Verify</button>
+    <div class="dropdown">
+      <button class="verify-button" style="font-size: 1.3rem;">☰</button>
+      <div class="dropdown-content" id="dropdown-content"></div>
+    </div>
   </div>
 </nav>
 
 <div class="scroll-container">
   <section class="video-section">
     <video autoplay muted loop playsinline>
-      <source src="videos/vid1.mov" type="video/mp4" />
+      <source src="videos/vid1.MOV" type="video/mp4" />
     </video>
     <div class="caption">Ever found yourself wandering with no sense of direction?</div>
   </section>
   <section class="video-section">
     <video autoplay muted loop playsinline>
-      <source src="videos/vid2.mov" type="video/mp4" />
+      <source src="videos/vid2.MOV" type="video/mp4" />
     </video>
     <div class="caption">What if your path was picked just for you — based on time, mood, and energy?</div>
   </section>
   <section class="video-section">
     <video autoplay muted loop playsinline>
-      <source src="videos/vid3.mov" type="video/mp4" />
+      <source src="videos/vid3.MOV" type="video/mp4" />
     </video>
     <div class="caption">Scenic loops. Verified landmarks. Mindful elevation. All in one place.</div>
   </section>
@@ -43,26 +81,7 @@
       <button id="lets-go-btn">Let's Go for a Walk</button>
     </div>
   </section>
-
-  <section id="map-section">
-    <div class="map-overlay">Mindful Steps Campus Walk Map</div>
-    <div id="map-cover"
-      style="position:absolute; top:0; left:0; right:0; bottom:0; z-index:10; background:transparent; cursor:pointer;"
-      onclick="activateMap()">
-    </div>
-    <iframe
-      id="map-embed"
-      src="https://www.google.com/maps/d/embed?mid=1M5E2sW1T42gTQnrC-3Jl6ctaMGY9rRE"
-      width="100%"
-      height="100%"
-      style="border: 0; pointer-events: none;"
-      allowfullscreen
-      loading="lazy">
-    </iframe>
-  </section>
 </div>
-
-<button id="explore-btn" onclick="scrollToMap()">Explore on Map</button>
 
 <footer>
   <div>
@@ -71,9 +90,8 @@
   </div>
   <div>
     <h3>Explore</h3>
-    <a href="#">Walkability Index</a>
-    <a href="#">Our Team</a>
-    <a href="#">Get Support</a>
+    <a href="team.html">Our Team</a>
+    <a href="support.html">Get Support</a>
   </div>
 </footer>
 
@@ -84,20 +102,30 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const links = document.getElementById("auth-links");
   const letsGoBtn = document.getElementById("lets-go-btn");
+  const dropdown = document.getElementById("dropdown-content");
 
   let currentUser = null;
+
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
     if (user) {
-      links.innerHTML = `
-        <span style="color:white; font-size: 0.95rem; margin-right: 1rem;">${user.email}</span>
-        <button class="verify-button" onclick="logout()">Logout</button>
+      dropdown.innerHTML = `
+        <a href="#">${user.email}</a>
+        <a href="index.html">Home</a>
+        <a href="generate-route.html">Plan Walk</a>
+        <a href="walkability.html">Walkability Index</a>
+        <a href="feedback.html">Feedback</a>
+        <a href="docs/brochure.pdf" target="_blank">View Brochure</a>
+        <a href="#" onclick="logout()">Logout</a>
       `;
     } else {
-      links.innerHTML = `
-        <button class="verify-button" onclick="window.location.href='auth.html'">Verify</button>
+      dropdown.innerHTML = `
+        <a href="auth.html">Sign In / Sign Up</a>
+        <a href="index.html">Home</a>
+        <a href="walkability.html">Walkability Index</a>
+        <a href="feedback.html">Feedback</a>
+        <a href="docs/brochure.pdf" target="_blank">View Brochure</a>
       `;
     }
   });
@@ -120,15 +148,6 @@
     );
     setTimeout(() => document.querySelector('.planner-section').classList.add('visible'), 2000);
   });
-
-  window.scrollToMap = function () {
-    document.getElementById('map-section').scrollIntoView({ behavior: 'smooth' });
-  };
-
-  window.activateMap = function () {
-    document.getElementById('map-embed').style.pointerEvents = 'auto';
-    document.getElementById('map-cover').style.display = 'none';
-  };
 </script>
 
 </body>

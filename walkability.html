@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Walkability Index – Mindful Steps</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <style>
+    #map-section {
+      position: relative;
+      margin-top: 4rem;
+      height: 70vh;
+    }
+
+    .map-overlay {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 1rem;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+
+    #map-embed {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="logo" href="index.html">Mindful Steps</a>
+  </nav>
+
+  <main style="padding: 4rem 2rem; max-width: 800px; margin: auto; text-align: center;">
+    <h1 style="margin-bottom: 1rem;">Walkability Index</h1>
+    <p style="font-size: 1.1rem; line-height: 1.7;">
+      The Walkability Index is a comprehensive score that helps us measure how friendly, accessible, and safe a walking route is across the Lehigh campus. It’s based on 26 indicators grouped into six core domains: Accessibility, Aesthetics, Land Use, Safety, Transportation, and Intersections. These indicators include everything from surface type, slope, and path maintenance to trees, greenery, lighting, and crosswalk quality.
+    </p>
+    <p style="font-size: 1.1rem; line-height: 1.7; margin-top: 2rem;">
+      Each segment is audited and scored on a 1–5 scale using validated tools like SPACES, PEAT, and SWEAT. For example, a smooth, continuous concrete path with shade, good lighting, benches, and crosswalks would score highly. In contrast, a steep, broken sidewalk with poor lighting or no pedestrian buffers would score lower. The goal is to offer mindful, comfortable walking experiences while addressing accessibility and safety for all users.
+    </p>
+
+    <section id="map-section">
+      <div class="map-overlay">Campus Walkability Map</div>
+      <iframe
+        id="map-embed"
+        src="https://www.google.com/maps/d/embed?mid=1sOzSj7Qp3BJ8u3JSLo9jLC-WbN1nuHM"
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    </section>
+  </main>
+
+</body>
+</html>

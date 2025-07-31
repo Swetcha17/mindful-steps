@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>MTSE Campus Walkability Website Map</name>
+    <description/>
+    <NetworkLink>
+      <name>MTSE Campus Walkability Website Map</name>
+      <Link>
+        <href><![CDATA[https://www.google.com/maps/d/kml?forcekml=1&mid=1sOzSj7Qp3BJ8u3JSLo9jLC-WbN1nuHM]]></href>
+      </Link>
+    </NetworkLink>
+  </Document>
+</kml>
