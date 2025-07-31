@@ -31,6 +31,48 @@
       height: 100%;
       border: none;
     }
+
+    main {
+      padding: 4rem 2rem;
+      max-width: 850px;
+      margin: auto;
+      text-align: center;
+      color: white;
+    }
+
+    p {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      margin-top: 1.5rem;
+    }
+
+    .legend {
+      margin-top: 2rem;
+      text-align: left;
+      background: #111;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      border: 1px solid #333;
+    }
+
+    .legend h3 {
+      margin-bottom: 1rem;
+      color: #10b981;
+    }
+
+    .legend-item {
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+    }
+
+    .legend-color {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -39,14 +81,23 @@
     <a class="logo" href="index.html">Mindful Steps</a>
   </nav>
 
-  <main style="padding: 4rem 2rem; max-width: 800px; margin: auto; text-align: center;">
-    <h1 style="margin-bottom: 1rem;">Walkability Index</h1>
-    <p style="font-size: 1.1rem; line-height: 1.7;">
-      The Walkability Index is a comprehensive score that helps us measure how friendly, accessible, and safe a walking route is across the Lehigh campus. It’s based on 26 indicators grouped into six core domains: Accessibility, Aesthetics, Land Use, Safety, Transportation, and Intersections. These indicators include everything from surface type, slope, and path maintenance to trees, greenery, lighting, and crosswalk quality.
+  <main>
+    <h1>🚶‍♂️ Walkability Index</h1>
+    <p>
+      Our Campus Walkability Index is a comprehensive score that helps our website measure how accessible, walkable, and safe a walking route is across Lehigh’s campus. This index consists of 26 different indicators grouped into six core domains: Accessibility, Aesthetics, Land Use, Safety, & Transportation. These indicators span from surface type, path maintenance, slope to tree cover, lighting, and access to greenery.
     </p>
-    <p style="font-size: 1.1rem; line-height: 1.7; margin-top: 2rem;">
-      Each segment is audited and scored on a 1–5 scale using validated tools like SPACES, PEAT, and SWEAT. For example, a smooth, continuous concrete path with shade, good lighting, benches, and crosswalks would score highly. In contrast, a steep, broken sidewalk with poor lighting or no pedestrian buffers would score lower. The goal is to offer mindful, comfortable walking experiences while addressing accessibility and safety for all users.
+    <p>
+      Street segments are physically audited and scored using a 1–5 Likert Scale, using information from similar environmental audit tools like SPACES or PEAT. Following this scale, each segment follows a final score that corresponds to a color-coded rating to visually represent walkability quality.
     </p>
+
+    <div class="legend">
+      <h3>Walkability Ratings</h3>
+      <div class="legend-item"><span class="legend-color" style="background: red;"></span> 1 (Poor) – Significant barriers to walkability & accessibility</div>
+      <div class="legend-item"><span class="legend-color" style="background: orange;"></span> 2 (Limited) – Noticeable limitations that need improvement</div>
+      <div class="legend-item"><span class="legend-color" style="background: yellow;"></span> 3 (Moderate) – Average walkability with room for improvement</div>
+      <div class="legend-item"><span class="legend-color" style="background: green;"></span> 4 (Good) – Well-maintained, consistently safe and accessible</div>
+      <div class="legend-item"><span class="legend-color" style="background: #3b82f6;"></span> 5 (Excellent) – Outstanding walkability across all indicators</div>
+    </div>
 
     <section id="map-section">
       <div class="map-overlay">Campus Walkability Map</div>
